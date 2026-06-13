@@ -11,14 +11,12 @@ import {
   Mietvertrag,
   Wohnungsgeberbestaetigung,
   Kuendigung,
-  Nebenkostenabrechnung,
 } from './templates'
 
 const TITLES: Record<string, string> = {
   mietvertrag: 'Mietvertrag',
   wohnungsgeberbestaetigung: 'Wohnungsgeberbestätigung',
   kuendigung: 'Kündigung',
-  nebenkostenabrechnung: 'Nebenkostenabrechnung',
 }
 
 export default function DokumentPage({ params }: { params: Promise<{ id: string; type: string }> }) {
@@ -83,7 +81,6 @@ export default function DokumentPage({ params }: { params: Promise<{ id: string;
           {type === 'mietvertrag' && <Mietvertrag d={data} />}
           {type === 'wohnungsgeberbestaetigung' && <Wohnungsgeberbestaetigung d={data} />}
           {type === 'kuendigung' && <Kuendigung d={data} />}
-          {type === 'nebenkostenabrechnung' && <Nebenkostenabrechnung d={data} />}
           {!TITLES[type] && <p className="p-12 text-center text-gray-500">Unbekannter Dokumenttyp.</p>}
         </div>
       </div>

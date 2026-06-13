@@ -48,7 +48,6 @@ const DOCS = [
   { type: 'mietvertrag', label: 'Mietvertrag' },
   { type: 'wohnungsgeberbestaetigung', label: 'Wohnungsgeberbestätigung' },
   { type: 'kuendigung', label: 'Kündigung' },
-  { type: 'nebenkostenabrechnung', label: 'Nebenkostenabrechnung' },
 ]
 
 const fitColor: Record<string, string> = {
@@ -191,6 +190,12 @@ export default function ObjektDetailPage({ params }: { params: Promise<{ id: str
                       📄 {d.label}
                     </Link>
                   ))}
+                  <Link
+                    href={`/nebenkosten/${t.id}`}
+                    className="text-xs border border-slate-300 bg-slate-50 rounded-lg px-3 py-1.5 hover:bg-slate-100 font-medium"
+                  >
+                    🧮 Nebenkostenabrechnung
+                  </Link>
                 </div>
               </div>
             ))}

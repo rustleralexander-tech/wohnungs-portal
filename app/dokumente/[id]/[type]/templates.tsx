@@ -237,19 +237,41 @@ export function Kuendigung({ d }: { d: DocData }) {
   )
 }
 
-export function Nebenkostenabrechnung({ d }: { d: DocData }) {
-  const months = 12
-  const prepaid = (d.utilities || 0) * months
-  const rows = ['Heizung / Warmwasser', 'Wasser / Abwasser', 'Grundsteuer', 'Müllabfuhr', 'Hausreinigung / Allgemeinstrom', 'Versicherungen', 'Sonstiges']
+export interface Position {
+  label: string
+  total_cost: number
+  share_pct: number
+}
+
+export interface StatementDocData {
+  period_start: string | null
+  period_end: string | null
+  prepayment_total: number | null
+  positions: Position[]
+  notes: string | null
+  tenant: DocData['tenant']
+  property: DocData['property']
+  landlord: DocData['landlord']
+}
+
+export function NebenkostenAbrechnungFilled({ s }: { s: StatementDocData }) {
+  const positions = Array.isArray(s.positions) ? s.positions : []
+  const shareOf = (p: Position) => (Number(p.total_cost) || 0) * (Number(p.share_pct) || 0) / 100
+  const tenantTotal = positions.reduce((sum, p) => sum + shareOf(p), 0)
+  const prepaid = Number(s.prepayment_total) || 0
+  const balance = prepaid - tenantTotal // positiv = Guthaben, negativ = Nachzahlung
+
   return (
     <div className="doc-sheet">
       <h1>Betriebs-/Nebenkostenabrechnung</h1>
-      <p style={{ color: '#666', fontSize: 13 }}>Abrechnungszeitraum: __________ bis __________</p>
+      <p style={{ color: '#666', fontSize: 13 }}>
+        Abrechnungszeitraum: {germanDate(s.period_start)} bis {germanDate(s.period_end)}
+      </p>
 
       <h2>Vermieter</h2>
-      <p><V x={landlordLine(d.landlord)} /></p>
+      <p><V x={landlordLine(s.landlord)} /></p>
       <h2>Mieter</h2>
-      <p><V x={d.tenant.full_name} />, <V x={propertyLine(d.property)} /></p>
+      <p><V x={s.tenant.full_name} />, <V x={propertyLine(s.property)} /></p>
 
       <h2>Aufstellung der Betriebskosten</h2>
       <table style={{ marginTop: 4 }}>
@@ -257,21 +279,24 @@ export function Nebenkostenabrechnung({ d }: { d: DocData }) {
           <tr style={{ borderBottom: '1px solid #111', fontWeight: 700 }}>
             <td>Kostenart</td>
             <td style={{ textAlign: 'right' }}>Gesamtkosten</td>
+            <td style={{ textAlign: 'right' }}>Anteil %</td>
             <td style={{ textAlign: 'right' }}>Anteil Mieter</td>
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
-            <tr key={r} style={{ borderBottom: '1px solid #eee' }}>
-              <td style={{ padding: '8px 0' }}>{r}</td>
-              <td style={{ textAlign: 'right' }}><span style={{ color: '#bbb' }}>________ €</span></td>
-              <td style={{ textAlign: 'right' }}><span style={{ color: '#bbb' }}>________ €</span></td>
+          {positions.filter((p) => (Number(p.total_cost) || 0) !== 0).map((p, i) => (
+            <tr key={i} style={{ borderBottom: '1px solid #eee' }}>
+              <td style={{ padding: '6px 0' }}>{p.label}</td>
+              <td style={{ textAlign: 'right' }}>{euro(p.total_cost)}</td>
+              <td style={{ textAlign: 'right' }}>{Number(p.share_pct) || 0}%</td>
+              <td style={{ textAlign: 'right' }}>{euro(shareOf(p))}</td>
             </tr>
           ))}
           <tr style={{ fontWeight: 700, borderTop: '1px solid #111' }}>
-            <td style={{ padding: '8px 0' }}>Summe Ihre Kosten</td>
+            <td style={{ padding: '6px 0' }}>Summe Ihre Kosten</td>
             <td></td>
-            <td style={{ textAlign: 'right' }}><span style={{ color: '#bbb' }}>________ €</span></td>
+            <td></td>
+            <td style={{ textAlign: 'right' }}>{euro(tenantTotal)}</td>
           </tr>
         </tbody>
       </table>
@@ -279,17 +304,22 @@ export function Nebenkostenabrechnung({ d }: { d: DocData }) {
       <h2>Abrechnung der Vorauszahlungen</h2>
       <table>
         <tbody>
-          <tr><td>Geleistete Vorauszahlungen ({euro(d.utilities)} × {months} Monate)</td><td style={{ textAlign: 'right' }}>{euro(prepaid)}</td></tr>
-          <tr><td>./. tatsächliche Kosten</td><td style={{ textAlign: 'right' }}><span style={{ color: '#bbb' }}>________ €</span></td></tr>
+          <tr><td>Geleistete Vorauszahlungen</td><td style={{ textAlign: 'right' }}>{euro(prepaid)}</td></tr>
+          <tr><td>./. Ihre Kosten lt. Abrechnung</td><td style={{ textAlign: 'right' }}>{euro(tenantTotal)}</td></tr>
           <tr style={{ fontWeight: 700, borderTop: '1px solid #111' }}>
-            <td>Guthaben / Nachzahlung</td><td style={{ textAlign: 'right' }}><span style={{ color: '#bbb' }}>________ €</span></td>
+            <td>{balance >= 0 ? 'Guthaben zu Ihren Gunsten' : 'Nachzahlung'}</td>
+            <td style={{ textAlign: 'right' }}>{euro(Math.abs(balance))}</td>
           </tr>
         </tbody>
       </table>
 
       <p style={{ marginTop: 16, fontSize: 13, color: '#666' }}>
-        Ein etwaiges Guthaben wird auf das bekannte Konto erstattet; eine Nachzahlung ist innerhalb von 30 Tagen fällig.
+        {balance >= 0
+          ? 'Das Guthaben wird Ihnen auf das bekannte Konto erstattet.'
+          : 'Der Nachzahlungsbetrag ist innerhalb von 30 Tagen auf das bekannte Konto des Vermieters zu überweisen.'}
       </p>
+
+      {s.notes && <p style={{ fontSize: 13 }}>{s.notes}</p>}
 
       <table style={{ marginTop: 40 }}>
         <tbody>
