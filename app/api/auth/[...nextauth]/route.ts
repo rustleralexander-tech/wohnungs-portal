@@ -9,12 +9,12 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials, req) {
+      async authorize(credentials, req): Promise<{ id: string; email: string; name: string } | null> {
         if (credentials?.email === process.env.ADMIN_EMAIL &&
             credentials?.password === process.env.ADMIN_PASSWORD) {
           return {
             id: "1",
-            email: credentials.email,
+            email: String(credentials.email),
             name: "Administrator"
           }
         }
