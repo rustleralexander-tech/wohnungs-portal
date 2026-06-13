@@ -97,7 +97,15 @@ export default function ObjektDetailPage({ params }: { params: Promise<{ id: str
           <h1 className="text-2xl font-bold">{property.name}</h1>
           <p className="text-gray-500">{[property.address, property.zip, property.city].filter(Boolean).join(', ')}</p>
         </div>
-        {property.furnished && <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">möbliert</span>}
+        <div className="flex items-center gap-3">
+          {property.furnished && <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">möbliert</span>}
+          <Link
+            href={`/objekte/${id}/bearbeiten`}
+            className="text-sm bg-slate-800 text-white px-3 py-1.5 rounded-lg hover:bg-slate-900 whitespace-nowrap"
+          >
+            Bearbeiten
+          </Link>
+        </div>
       </div>
 
       {/* Objektdaten */}
