@@ -9,7 +9,7 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (credentials?.email === process.env.ADMIN_EMAIL &&
             credentials?.password === process.env.ADMIN_PASSWORD) {
           return {
