@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Wohnungs Portal - Kerpen Apartments",
-  description: "Buche dein Apartment in Kerpen - langfristige Vermietung für Monteure und Studenten",
+  title: "Vermieter-Cockpit – Objektverwaltung",
+  description: "Mietobjekte, Mieter und Dokumente zentral verwalten",
 };
 
 export default function RootLayout({

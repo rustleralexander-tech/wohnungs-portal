@@ -23,7 +23,7 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
     })
   ],
   pages: {
-    signIn: '/admin/login',
+    signIn: '/login',
   },
   callbacks: {
     async jwt({ token, user }) {
