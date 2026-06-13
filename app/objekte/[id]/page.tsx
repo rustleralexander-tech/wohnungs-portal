@@ -41,6 +41,7 @@ interface Property {
   target_group: string | null
   description: string | null
   rules: string | null
+  images: string[] | null
 }
 
 const DOCS = [
@@ -122,6 +123,9 @@ export default function ObjektDetailPage({ params }: { params: Promise<{ id: str
         </div>
         {property.description && <p className="text-sm text-gray-600 mt-4 whitespace-pre-wrap">{property.description}</p>}
       </section>
+
+      {/* Bilder */}
+      <ImageManager propertyId={id} initial={Array.isArray(property.images) ? property.images : []} />
 
       {/* Inserat-Empfehlung */}
       <section className="bg-white border rounded-xl p-6 mb-6">
@@ -206,6 +210,74 @@ export default function ObjektDetailPage({ params }: { params: Promise<{ id: str
         Objekt löschen
       </button>
     </AppShell>
+  )
+}
+
+function ImageManager({ propertyId, initial }: { propertyId: string; initial: string[] }) {
+  const [images, setImages] = useState<string[]>(initial)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    setUploading(true)
+    setError('')
+    try {
+      for (const file of Array.from(files)) {
+        const fd = new FormData()
+        fd.append('file', file)
+        const res = await fetch(`/api/properties/${propertyId}/images`, { method: 'POST', body: fd })
+        const data = await res.json()
+        if (!res.ok) {
+          setError(data.error || 'Upload fehlgeschlagen')
+          break
+        }
+        setImages(data.images)
+      }
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
+  }
+
+  const handleDelete = async (url: string) => {
+    const res = await fetch(`/api/properties/${propertyId}/images?url=${encodeURIComponent(url)}`, { method: 'DELETE' })
+    if (res.ok) {
+      const data = await res.json()
+      setImages(data.images)
+    }
+  }
+
+  return (
+    <section className="bg-white border rounded-xl p-6 mb-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="font-semibold">Fotos</h2>
+        <label className="text-sm bg-slate-800 text-white px-3 py-1.5 rounded-lg hover:bg-slate-900 cursor-pointer">
+          {uploading ? 'Wird hochgeladen…' : '+ Foto hochladen'}
+          <input type="file" accept="image/*" multiple onChange={handleUpload} className="hidden" disabled={uploading} />
+        </label>
+      </div>
+      {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+      {images.length === 0 ? (
+        <p className="text-sm text-gray-500">Noch keine Fotos. Lade Bilder hoch, um sie beim Inserieren zu verwenden.</p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {images.map((url) => (
+            <div key={url} className="relative group">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={url} alt="Objektfoto" className="w-full h-32 object-cover rounded-lg border" />
+              <button
+                onClick={() => handleDelete(url)}
+                className="absolute top-1 right-1 bg-black/60 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"
+              >
+                Löschen
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   )
 }
 

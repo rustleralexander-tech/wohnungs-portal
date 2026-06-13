@@ -18,6 +18,7 @@ interface Property {
   furnished: boolean | null
   base_rent: number | null
   target_group: string | null
+  images: string[] | null
 }
 
 export default function Dashboard() {
@@ -65,8 +66,13 @@ export default function Dashboard() {
             <Link
               key={p.id}
               href={`/objekte/${p.id}`}
-              className="bg-white border rounded-xl p-5 hover:shadow-md transition block"
+              className="bg-white border rounded-xl overflow-hidden hover:shadow-md transition block"
             >
+              {Array.isArray(p.images) && p.images.length > 0 && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={p.images[0]} alt={p.name} className="w-full h-40 object-cover" />
+              )}
+              <div className="p-5">
               <div className="flex justify-between items-start mb-2">
                 <h3 className="font-semibold text-lg">{p.name}</h3>
                 {p.furnished && (
@@ -84,6 +90,7 @@ export default function Dashboard() {
               {p.target_group && (
                 <p className="text-xs text-gray-400 mt-2">Zielgruppe: {p.target_group}</p>
               )}
+              </div>
             </Link>
           ))}
         </div>

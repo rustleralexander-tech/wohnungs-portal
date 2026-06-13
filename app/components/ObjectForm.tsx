@@ -53,6 +53,50 @@ export function ObjectForm({
 
   const set = (k: string, v: string | boolean) => setForm((p) => ({ ...p, [k]: v }))
 
+  // KI-Vorschläge
+  const [aiLoading, setAiLoading] = useState<string | null>(null)
+  const [aiError, setAiError] = useState('')
+  const [priceSuggestion, setPriceSuggestion] = useState('')
+
+  const askAI = async (field: 'description' | 'rules' | 'price') => {
+    setAiLoading(field)
+    setAiError('')
+    try {
+      const res = await fetch('/api/ai/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          field,
+          property: {
+            name: form.name,
+            address: form.address,
+            zip: form.zip,
+            city: form.city,
+            rooms: form.rooms,
+            size_sqm: form.size_sqm,
+            floor: form.floor,
+            furnished: form.furnished,
+            target_group: form.target_group,
+          },
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setAiError(data.error || 'KI-Vorschlag fehlgeschlagen')
+        return
+      }
+      if (field === 'description') set('description', data.text)
+      else if (field === 'rules') set('rules', data.text)
+      else setPriceSuggestion(data.text)
+    } catch {
+      setAiError('KI-Vorschlag fehlgeschlagen')
+    } finally {
+      setAiLoading(null)
+    }
+  }
+
+  const aiBtn = 'text-xs font-medium text-violet-700 hover:text-violet-900 disabled:opacity-50'
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -78,6 +122,7 @@ export function ObjectForm({
   return (
     <form onSubmit={handleSubmit} className="bg-white border rounded-xl p-6 space-y-6 max-w-2xl">
       {error && <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm">{error}</div>}
+      {aiError && <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg text-sm">{aiError}</div>}
 
       <div>
         <label className="block text-sm font-medium mb-1">Bezeichnung *</label>
@@ -121,7 +166,12 @@ export function ObjectForm({
 
       <div className="grid sm:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Kaltmiete (€)</label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium">Kaltmiete (€)</label>
+            <button type="button" onClick={() => askAI('price')} disabled={aiLoading === 'price'} className={aiBtn}>
+              {aiLoading === 'price' ? '…' : '✨ Preis schätzen'}
+            </button>
+          </div>
           <input className={input} type="number" step="0.01" value={form.base_rent as string} onChange={(e) => set('base_rent', e.target.value)} />
         </div>
         <div>
@@ -134,19 +184,35 @@ export function ObjectForm({
         </div>
       </div>
 
+      {priceSuggestion && (
+        <div className="bg-violet-50 border border-violet-200 rounded-lg p-3 text-sm text-violet-900 whitespace-pre-wrap">
+          {priceSuggestion}
+        </div>
+      )}
+
       <div>
         <label className="block text-sm font-medium mb-1">Zielgruppe</label>
         <input className={input} value={form.target_group as string} onChange={(e) => set('target_group', e.target.value)} placeholder="z.B. Monteure, Studenten, Geschäftsleute, Pendler" />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Beschreibung</label>
-        <textarea className={`${input} h-24`} value={form.description as string} onChange={(e) => set('description', e.target.value)} />
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-sm font-medium">Beschreibung</label>
+          <button type="button" onClick={() => askAI('description')} disabled={aiLoading === 'description'} className={aiBtn}>
+            {aiLoading === 'description' ? 'Wird erstellt…' : '✨ KI-Vorschlag'}
+          </button>
+        </div>
+        <textarea className={`${input} h-32`} value={form.description as string} onChange={(e) => set('description', e.target.value)} />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Hausordnung / Regeln</label>
-        <textarea className={`${input} h-20`} value={form.rules as string} onChange={(e) => set('rules', e.target.value)} placeholder="z.B. Nichtraucher, keine Haustiere" />
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-sm font-medium">Hausordnung / Regeln</label>
+          <button type="button" onClick={() => askAI('rules')} disabled={aiLoading === 'rules'} className={aiBtn}>
+            {aiLoading === 'rules' ? 'Wird erstellt…' : '✨ KI-Vorschlag'}
+          </button>
+        </div>
+        <textarea className={`${input} h-28`} value={form.rules as string} onChange={(e) => set('rules', e.target.value)} placeholder="z.B. Nichtraucher, keine Haustiere" />
       </div>
 
       <div className="flex gap-3 pt-2">
